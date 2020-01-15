@@ -174,8 +174,66 @@ router.delete('/:id', (req, res) => {
         .catch(() => {
             res
                 .status(500)
-                .json({ error: "There is an error while deleting the comment from the database" })
+                .json({ error: "There is an error accessing the post" })
         });
+})
+
+router.put('/:id', (req, res) => {
+    const id = req.params.id;
+    const post = req.body;
+
+    if(!post.title || !post.contents) {
+        res
+            .status(400)
+            .json({ errorMessage: "Please provide title and contents for the post." });
+    }
+
+    db
+        .findById(id)
+        .then(targetPost => {
+            if(targetPost.length) {
+                db
+                    .update(id, post)
+                    .then(indicator => {
+                        if(indicator > 0) {
+                            db
+                                .findById(id)
+                                .then(newPost => {
+                                    if(newPost.length) {
+                                        res
+                                            .status(201)
+                                            .json(newPost)
+                                    }
+                                    else {
+                                        res
+                                            .status(404)
+                                            .json({ message: "The post with the specified ID does not exist." });
+                                    }
+                                })
+                        }
+                        else {
+                            res
+                                .status(500)
+                                .json({ error: "The post information could not be modified." });
+                        }
+                    })
+                    .catch(() => {
+                        res
+                            .status(500)
+                            .json({ error: "The post information could not be modified." });
+                    });
+            }
+            else {
+                res
+                    .status(404)
+                    .json({ message: "The post with the specified ID does not exist." });
+            }
+        })
+        .catch(() => {
+            res
+                .status(404)
+                .json({ message: "The post with the specified ID does not exist." })
+        })
 })
 
 module.exports = router;
