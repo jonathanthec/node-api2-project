@@ -46,7 +46,7 @@ router.get('/:id/comments', (req, res) => {
         .then(post => {
             if(post.length) {
                 db
-                    .findCommentById(id)
+                    .findPostComments(id)
                     .then(comment => {
                         if(comment.length) {
                             res
@@ -110,6 +110,39 @@ router.post('/', (req, res) => {
         });
 })
 
+router.post('/:id/comments', (req, res) => {
+    const comment = req.body;
+    const id = req.params.id;
 
+    if(!comment.text) {
+        res
+            .status(400)
+            .json({ errorMessage: "Please provide text for the comment." });
+    }
+
+    comment.post_id = id;
+
+    db
+        .insertComment(comment)
+        .then(({ id }) => {
+            db
+                .findCommentById(id)
+                .then(comment => {
+                    res
+                        .status(201)
+                        .json(comment)
+                })
+                .catch(() => {
+                    res
+                        .status(500)
+                        .json({ error: "There was an error while saving the comment to the database" });
+                });
+        })
+        .catch(() => {
+            res
+                .status(404)
+                .res({ message: "The post with the specified ID does not exist." });
+        });
+})
 
 module.exports = router;
